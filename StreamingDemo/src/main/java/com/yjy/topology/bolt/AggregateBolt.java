@@ -7,6 +7,7 @@ import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
+import redis.clients.jedis.Jedis;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,9 +30,42 @@ public class AggregateBolt extends BaseRichBolt {
     public void prepare(Map<String, Object> conf, TopologyContext context, OutputCollector collector) {
         this.collector = collector;
         this.productSales = new HashMap<>();
-        this.totalSales = 0.0;
         this.productCount = new HashMap<>();
-        this.totalCount = 0L;
+
+        Jedis jedis = new Jedis("hadoop102", 6379);
+
+        try {
+            // 加载总金额和总销量
+            String totalSalesStr = jedis.get("sales:total");
+            this.totalSales = totalSalesStr != null ? Double.parseDouble(totalSalesStr) : 0.0;
+
+            String totalCountStr = jedis.get("sales:total:count");
+            this.totalCount = totalCountStr != null ? Long.parseLong(totalCountStr) : 0L;
+
+            // 加载各商品累计金额
+            Map<String, String> salesMap = jedis.hgetAll("sales:realtime");
+            for (Map.Entry<String, String> entry : salesMap.entrySet()) {
+                productSales.put(entry.getKey(), Double.parseDouble(entry.getValue()));
+            }
+
+            // 加载各商品累计销量
+            Map<String, String> countMap = jedis.hgetAll("sales:realtime:count");
+            for (Map.Entry<String, String> entry : countMap.entrySet()) {
+                productCount.put(entry.getKey(), Long.parseLong(entry.getValue()));
+            }
+
+            System.out.println("[AggregateBolt] 从 Redis 加载历史数据完成");
+        } catch (Exception e) {
+            System.err.println("[AggregateBolt] 加载历史数据失败，使用初始值: " + e.getMessage());
+            // 从Redis抓数据失败时用 0 初始化，避免拓扑启动失败
+            this.totalSales = 0.0;
+            this.totalCount = 0L;
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
+
     }
 
     @Override
