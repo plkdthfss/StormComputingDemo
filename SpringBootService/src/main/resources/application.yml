@@ -1,0 +1,11 @@
+server:
+  port: 8080
+
+redis:
+  host: hadoop102
+  port: 6379
+  password: ""     # 如有密码，填上
+  timeoutMs: 10000
+
+sales:
+  key-prefix: "sales"   # 生产默认前缀；测试会覆盖为 test:sales
