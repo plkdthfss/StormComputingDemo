@@ -1,36 +1,52 @@
 // ===================== 1. 初始化 ECharts =====================
-const barChart = echarts.init(document.getElementById('bar-chart'));
+const amountChart = echarts.init(document.getElementById('amount-chart'));  // 销售额图表
+const countChart = echarts.init(document.getElementById('count-chart'));    // 销售量图表
 const lineChart = echarts.init(document.getElementById('line-chart'));
 
 // ===================== 2. 初始配置 =====================
-const barOption = {
-    title: { text: '各产品销售情况', left: 'center' },
+// 销售额柱状图配置
+const amountOption = {
     tooltip: { trigger: 'axis' },
-    legend: { data: ['销售额', '销量'], bottom: 0 },
-    grid: { left: '5%', right: '5%', bottom: '10%', containLabel: true },
+    grid: { left: '8%', right: '5%', bottom: '10%', containLabel: true },
     xAxis: { type: 'category', data: [] },
-    yAxis: [
-        { type: 'value', name: '销售额（元）' },
-        { type: 'value', name: '销量（件）', position: 'right' }
-    ],
+    yAxis: { type: 'value', name: '销售额（元）' },
     series: [
         {
             name: '销售额',
             type: 'bar',
-            yAxisIndex: 0,
             data: [],
-            itemStyle: { color: '#5470C6' }
-        },
-        {
-            name: '销量',
-            type: 'bar',
-            yAxisIndex: 1,
-            data: [],
-            itemStyle: { color: '#91CC75' }
+            itemStyle: { color: '#5470C6' },
+            label: {
+                show: true,
+                position: 'top',
+                formatter: '{c}'
+            }
         }
     ]
 };
 
+// 销售量柱状图配置
+const countOption = {
+    tooltip: { trigger: 'axis' },
+    grid: { left: '8%', right: '5%', bottom: '10%', containLabel: true },
+    xAxis: { type: 'category', data: [] },
+    yAxis: { type: 'value', name: '销量（件）' },
+    series: [
+        {
+            name: '销量',
+            type: 'bar',
+            data: [],
+            itemStyle: { color: '#91CC75' },
+            label: {
+                show: true,
+                position: 'top',
+                formatter: '{c}'
+            }
+        }
+    ]
+};
+
+// 趋势图配置保持不变
 const lineOption = {
     title: { text: '销售额趋势', left: 'center' },
     tooltip: { trigger: 'axis' },
@@ -49,7 +65,9 @@ const lineOption = {
     ]
 };
 
-barChart.setOption(barOption);
+// 设置初始配置
+amountChart.setOption(amountOption);
+countChart.setOption(countOption);
 lineChart.setOption(lineOption);
 
 // ===================== 3. 工具函数 =====================
@@ -81,20 +99,40 @@ async function updateDashboard() {
     document.getElementById('total-count').innerText =
         `${Number(total.totalCount || 0)} 件`;
 
-    // ---- 更新柱状图 ----
-    const xData = realtime.map(i => i.productId);
-    const amountData = realtime.map(i => parseFloat(i.amount || 0));
-    const countData = realtime.map(i => parseInt(i.count || 0));
+    // ---- 处理数据排序 ----
+    // 按销售额从高到低排序
+    const sortedByAmount = [...realtime].sort((a, b) =>
+        parseFloat(b.amount || 0) - parseFloat(a.amount || 0)
+    );
 
-    barChart.setOption({
-        xAxis: { data: xData },
-        series: [
-            { name: '销售额', data: amountData },
-            { name: '销量', data: countData }
-        ]
+    // 按销售量从高到低排序
+    const sortedByCount = [...realtime].sort((a, b) =>
+        parseInt(b.count || 0) - parseInt(a.count || 0)
+    );
+
+    // ---- 更新销售额柱状图 ----
+    const amountXData = sortedByAmount.map(i => {
+        const match = i.productId.match(/\d+/);
+        return match ? `PID${match[0]}` : `PID${i.productId}`;
+    });
+    const amountYData = sortedByAmount.map(i => parseFloat(i.amount || 0));
+    amountChart.setOption({
+        xAxis: { data: amountXData },
+        series: [{ data: amountYData }]
     });
 
-    // ---- 更新折线图 ----
+    // ---- 更新销售量柱状图 ----
+    const countXData = sortedByCount.map(i => {
+        const match = i.productId.match(/\d+/);
+        return match ? `PID${match[0]}` : `PID${i.productId}`;
+    });
+    const countYData = sortedByCount.map(i => parseInt(i.count || 0));
+    countChart.setOption({
+        xAxis: { data: countXData },
+        series: [{ data: countYData }]
+    });
+
+    // ---- 更新折线图（保持不变）----
     const timeData = timeline.map(i => {
         const d = new Date(i.timestamp);
         return isNaN(d.getTime()) ? '' : d.toLocaleTimeString();
@@ -103,7 +141,7 @@ async function updateDashboard() {
 
     lineChart.setOption({
         xAxis: { data: timeData },
-        series: [{ name: '总销售额', data: valueData }]
+        series: [{ data: valueData }]
     });
 }
 
@@ -113,6 +151,7 @@ setInterval(updateDashboard, 1000);
 
 // ===================== 6. 窗口自适应 =====================
 window.addEventListener('resize', () => {
-    barChart.resize();
+    amountChart.resize();
+    countChart.resize();
     lineChart.resize();
 });
