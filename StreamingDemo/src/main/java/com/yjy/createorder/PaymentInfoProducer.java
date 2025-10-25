@@ -1,6 +1,7 @@
 package com.yjy.createorder;
 
 import com.yjy.pojo.PaymentInfo;
+import com.yjy.util.ConfigUtil;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 import java.util.Properties;
@@ -11,8 +12,8 @@ import java.util.Properties;
 public class PaymentInfoProducer {
     public static void main(String[] args) throws Exception {
         // Kafka 服务地址
-        String bootstrapServers = "hadoop102:9092,hadoop103:9092,hadoop104:9092";
-        String topic = "sales_events"; // 你可以改成自己的 topic
+        String bootstrapServers = ConfigUtil.getString("kafka.brokers");
+        String topic = ConfigUtil.getString("kafka.topic");
 
         // Kafka 配置
         Properties props = new Properties();

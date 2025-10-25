@@ -8,4 +8,4 @@ redis:
   timeoutMs: 10000
 
 sales:
-  key-prefix: "sales"   # 生产默认前缀；测试会覆盖为 test:sales
+  key-prefix: "sales"

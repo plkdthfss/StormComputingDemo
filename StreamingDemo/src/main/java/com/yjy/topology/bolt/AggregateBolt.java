@@ -1,5 +1,6 @@
 package com.yjy.topology.bolt;
 
+import com.yjy.util.ConfigUtil;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -32,7 +33,7 @@ public class AggregateBolt extends BaseRichBolt {
         this.productSales = new HashMap<>();
         this.productCount = new HashMap<>();
 
-        Jedis jedis = new Jedis("hadoop102", 6379);
+        Jedis jedis = new Jedis(ConfigUtil.getString("redis.host"), ConfigUtil.getInt("redis.port"));
 
         try {
             // 加载总金额和总销量

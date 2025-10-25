@@ -1,5 +1,6 @@
 package com.yjy.topology.bolt;
 
+import com.yjy.util.ConfigUtil;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -27,7 +28,7 @@ public class RedisBolt extends BaseRichBolt {
 
     @Override
     public void prepare(Map<String, Object> topoConf, TopologyContext context, OutputCollector collector) {
-        jedis = new Jedis("192.168.10.102", 6379);
+        jedis = new Jedis(ConfigUtil.getString("redis.hosts"), ConfigUtil.getInt("redis.port"));
         System.out.println("[RedisBolt] 已连接 Redis");
     }
 
