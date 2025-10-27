@@ -39,7 +39,7 @@ public class PaymentInfoProducer {
                 }
             });
 
-            Thread.sleep(1000); // 每秒一条
+            Thread.sleep(5000); // 每秒一条
         }
     }
 }

@@ -28,7 +28,7 @@ public class RedisBolt extends BaseRichBolt {
 
     @Override
     public void prepare(Map<String, Object> topoConf, TopologyContext context, OutputCollector collector) {
-        jedis = new Jedis(ConfigUtil.getString("redis.hosts"), ConfigUtil.getInt("redis.port"));
+        jedis = new Jedis(ConfigUtil.getString("redis.host"), ConfigUtil.getInt("redis.port"));
         System.out.println("[RedisBolt] 已连接 Redis");
     }
 
